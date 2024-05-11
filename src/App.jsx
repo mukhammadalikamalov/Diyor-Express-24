@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { Box, Button, CircularProgress, Grid } from "@mui/material";
 import axios from "axios";
-import { Box, Grid } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import SearchBar from "./components/Form/SearchBar";
 import Layout from "./components/layout/layout";
 
+
+
+
 const searchApi = "https://www.themealdb.com/api/json/v1/1/search.php?s=";
-const itemsPage = 9;
+const itemsPerPage = 9;
+const initialCardsToShow = 6;
 
 const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +19,8 @@ const HomePage = () => {
   const [filteredStores, setFilteredStores] = useState([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [allSubcategories, setAllSubcategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [cardsToShow, setCardsToShow] = useState(initialCardsToShow);
 
   useEffect(() => {
     axios
@@ -57,9 +63,9 @@ const HomePage = () => {
     setFilteredStores(stores);
   };
 
-  const searchRecipes = async () => {
+  const searchRecipes = async (page = 1) => {
     setIsLoading(true);
-    const url = searchApi + query;
+    const url = searchApi + query + `&page=${page}`;
     const res = await fetch(url);
     const data = await res.json();
     setFilteredStores(data.meals);
@@ -75,9 +81,20 @@ const HomePage = () => {
     searchRecipes();
   };
 
+  const handleClick = () => {
+    setIsLoading(true);
+    // Simulate a long-running process
+    setTimeout(() => {
+      setCardsToShow(cardsToShow + itemsPerPage);
+      setIsLoading(false);
+    }, 2000);
+  };
+
   return (
     <Layout>
       <SearchBar isLoading={isLoading} query={query} setQuery={setQuery} handleSubmit={handleSubmit} />
+      
+
       <Box sx={{ flexGrow: 1, margin: "auto", maxWidth: "lg" }}>
         <h1>Restaurants</h1>
         <button
@@ -117,7 +134,7 @@ const HomePage = () => {
         ))}
 
         <Grid container rowSpacing={2} columnSpacing={{ xs: 1, sm: 2, md: 12 }} spacing={0} marginTop={2}>
-          {filteredStores.map((restaurant, index) => (
+          {filteredStores.slice(0, cardsToShow).map((restaurant, index) => (
             <Grid item xs={4} sm={6} md={4} key={index}>
               <Box marginBottom={4}>
                 <Box
@@ -156,9 +173,27 @@ const HomePage = () => {
             </Grid>
           ))}
         </Grid>
+        {filteredStores.length > cardsToShow && (
+          <Button
+            style={{
+              width: "1050px",
+              height: "5vh",
+              margin: "20px auto",
+              backgroundColor: "#ececee",
+              color: "black",
+              borderRadius: "10px",
+              position: "relative",
+            }}
+            onClick={handleClick}
+          >
+            {isLoading && <CircularProgress size={24} style={{ position: "absolute", top: "50%", left: "70%", marginTop: -12, marginLeft: -12 }} />}
+            {!isLoading && "Show more"}
+          </Button>
+        )}
       </Box>
     </Layout>
   );
 };
 
 export default HomePage;
+
